@@ -667,20 +667,28 @@ export default function MaintenanceDashboard() {
     setLoading(false);
   }, []);
 
-  const loadData = async () => {
-    try {
-      const [machines, ints] = await Promise.all([
-        api.getMachines(),
-        api.getInterventions()
-      ]);
-      setMachinesData(machines);
-      setInterventions(ints);
-    } catch (err) {
-      console.error('Erreur de chargement', err);
-      // Token invalide ou expiré -> déconnexion
-      handleLogout();
-    }
-  };
+ const loadData = async () => {
+  try {
+    const [machines, ints] = await Promise.all([
+      api.getMachines(),
+      api.getInterventions()
+    ]);
+
+    const fixedMachines = machines.map(m => ({
+      ...m,
+      lastMaintenance: m.lastmaintenance,
+      nextMaintenance: m.nextmaintenance,
+      technicienId: m.technicienid
+    }));
+
+    setMachinesData(fixedMachines);
+    setInterventions(ints);
+
+  } catch (err) {
+    console.error('Erreur de chargement', err);
+    handleLogout();
+  }
+};
 
   const handleLogin = (userData) => {
     setUser(userData);

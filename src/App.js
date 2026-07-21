@@ -656,7 +656,7 @@ export default function MaintenanceDashboard() {
       // On a un token, on récupère les données
       loadData();
       // On considère l'utilisateur connecté (token présent)
-      
+      // On pourrait aussi vérifier sa validité via /api/auth/me
       const savedUser = localStorage.getItem('user');
       if (savedUser) setUser(JSON.parse(savedUser));
     }

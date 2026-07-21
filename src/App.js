@@ -9,11 +9,7 @@ import UsersPage from './UsersPage';
 
 
 
-const upcomingTasks = [
-  { id: 1, machine: "Machine B", type: "Maintenance préventive", date: "2025-04-15", priority: "normale" },
-  { id: 2, machine: "Machine C", type: "Réparation", date: "2025-04-14", priority: "élevée" },
-  { id: 3, machine: "Machine A", type: "Inspection", date: "2025-04-30", priority: "faible" },
-];
+
 
 const COLORS = ['#22c55e', '#3b82f6', '#ef4444', '#f59e0b'];
 
@@ -873,18 +869,33 @@ export default function MaintenanceDashboard() {
 
               <div className="card">
                 <h2>Tâches à venir</h2>
-                {upcomingTasks.map(task => (
-                  <div key={task.id} className="task-item">
-                    <div>
-                      <div className="task-name">{task.machine}</div>
-                      <div className="task-type">{task.type}</div>
-                    </div>
-                    <div>
-                      <span className={getPriorityBadge(task.priority)}>{task.priority}</span>
-                      <div className="task-date">📅 {formatDate(task.date)}</div>
-                    </div>
-                  </div>
-                ))}
+                {machinesData
+                  .filter(m => m.nextMaintenance)
+                  .sort((a, b) => new Date(a.nextMaintenance) - new Date(b.nextMaintenance))
+                  .slice(0, 5)
+                  .map(machine => {
+                     const diff = Math.ceil((new Date(machine.nextMaintenance) - new Date()) / (1000 * 60 * 60 * 24));
+                     return (
+                      <div key={machine.id} className="task-item">
+                        <div>
+                         <div className="task-name">{machine.name}</div>
+                         <div className="task-type">Maintenance planifiée</div>
+                        </div>
+                      <div>
+                         <span className={diff <= 3 ? 'badge badge-red' : diff <= 7 ? 'badge badge-yellow' : 'badge badge-green'}>
+                          {diff <= 0 ? 'En retard !' : diff === 1 ? 'Demain' : `Dans ${diff} jours`}
+                         </span>
+                         <div className="task-date">📅 {formatDate(machine.nextMaintenance)}</div>
+                      </div>
+               </div>
+              );
+            })
+          }
+          {machinesData.filter(m => m.nextMaintenance).length === 0 && (
+            <p style={{color: '#9ca3af', fontSize: '14px'}}>Aucune maintenance planifiée.</p>
+          )}
+        </div>
+               
                 <button className="btn-link">Voir toutes les tâches</button>
               </div>
             </div>

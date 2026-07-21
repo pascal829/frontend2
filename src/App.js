@@ -791,63 +791,99 @@ export default function MaintenanceDashboard() {
 
       <div className="main">
         {/* ONGLET 1: TABLEAU DE BORD */}
-        {activeTab === 'dashboard' && (
-          <div>
-            <div className="cards-grid" style={{ marginBottom: '24px' }}>
-              <div className="card">
-                <h2>Opérationnelles</h2>
-                <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#22c55e', margin: '12px 0' }}>
-                  {statusCounts.operational}
-                </div>
-                <p style={{ color: '#6b7280', fontSize: '14px' }}>sur {machinesData.length} machines</p>
-              </div>
-              <div className="card">
-                <h2>En maintenance</h2>
-                <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#3b82f6', margin: '12px 0' }}>
-                  {statusCounts.maintenance}
-                </div>
-                <p style={{ color: '#6b7280', fontSize: '14px' }}>interventions en cours</p>
-              </div>
-              <div className="card">
-                <h2>Défaillantes</h2>
-                <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#ef4444', margin: '12px 0' }}>
-                  {statusCounts.failure}
-                </div>
-                <p style={{ color: '#6b7280', fontSize: '14px' }}>action requise</p>
-              </div>
-            </div>
+{activeTab === 'dashboard' && (() => {
+  // Calcul des maintenances prévues dans les 7 prochains jours
+  const today = new Date();
+  const in7Days = new Date();
+  in7Days.setDate(today.getDate() + 7);
 
-            <div className="table-container">
-              <div className="table-header">Aperçu rapide des machines</div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Nom</th>
-                    <th>Emplacement</th>
-                    <th>État</th>
-                    <th>Prochaine maintenance</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {machinesData.map(machine => (
-                    <tr key={machine.id}>
-                      <td><strong>{machine.name}</strong></td>
-                      <td>{machine.location || '—'}</td>
-                      <td><span className={getStatusBadge(machine.status)}>{machine.status}</span></td>
-                      <td>{formatDate(machine.nextMaintenance)}</td>
-                      <td>
-                        <button className="btn-secondary" onClick={() => setSelectedMachine(machine)}>
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+  const upcoming7Days = machinesData.filter(m => {
+    if (!m.nextMaintenance) return false;
+    const nextDate = new Date(m.nextMaintenance);
+    return nextDate >= today && nextDate <= in7Days;
+  }).sort((a, b) => new Date(a.nextMaintenance) - new Date(b.nextMaintenance));
+
+  return (
+    <div>
+      {/* Passage à 4 cartes dans la grille */}
+      <div className="cards-grid" style={{ marginBottom: '24px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+        <div className="card">
+          <h2>Opérationnelles</h2>
+          <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#22c55e', margin: '12px 0' }}>
+            {statusCounts.operational}
           </div>
-        )}
+          <p style={{ color: '#6b7280', fontSize: '14px' }}>sur {machinesData.length} machines</p>
+        </div>
+
+        <div className="card">
+          <h2>En maintenance</h2>
+          <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#3b82f6', margin: '12px 0' }}>
+            {statusCounts.maintenance}
+          </div>
+          <p style={{ color: '#6b7280', fontSize: '14px' }}>interventions en cours</p>
+        </div>
+
+        <div className="card">
+          <h2>Défaillantes</h2>
+          <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#ef4444', margin: '12px 0' }}>
+            {statusCounts.failure}
+          </div>
+          <p style={{ color: '#6b7280', fontSize: '14px' }}>action requise</p>
+        </div>
+
+        {/* 🆕 NOUVELLE CARTE : Entretiens à venir à 7 jours */}
+        <div className="card" style={{ borderColor: '#f59e0b', backgroundColor: '#fffbeb' }}>
+          <h2 style={{ color: '#b45309' }}>⏰ Prévus sous 7 jours</h2>
+          <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#d97706', margin: '8px 0' }}>
+            {upcoming7Days.length}
+          </div>
+          
+          {upcoming7Days.length === 0 ? (
+            <p style={{ color: '#92400e', fontSize: '13px' }}>Aucun entretien prévu cette semaine.</p>
+          ) : (
+            <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0 0', maxHeight: '120px', overflowY: 'auto' }}>
+              {upcoming7Days.map(m => (
+                <li key={m.id} style={{ fontSize: '13px', color: '#78350f', marginBottom: '6px', borderBottom: '1px dashed #fde68a', paddingBottom: '4px' }}>
+                  <strong>{m.name}</strong> — {formatDate(m.nextMaintenance)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      <div className="table-container">
+        <div className="table-header">Aperçu rapide des machines</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Emplacement</th>
+              <th>État</th>
+              <th>Prochaine maintenance</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {machinesData.map(machine => (
+              <tr key={machine.id}>
+                <td><strong>{machine.name}</strong></td>
+                <td>{machine.location || '—'}</td>
+                <td><span className={getStatusBadge(machine.status)}>{machine.status}</span></td>
+                <td>{formatDate(machine.nextMaintenance)}</td>
+                <td>
+                  <button className="btn-secondary" onClick={() => setSelectedMachine(machine)}>
+                    Détails
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+})()}
 
         {/* ONGLET 2: MACHINES */}
         {activeTab === 'machines' && (

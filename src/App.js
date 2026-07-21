@@ -7,10 +7,6 @@ import { api } from './api';
 import LoginPage from './LoginPage';
 import UsersPage from './UsersPage';
 
-
-
-
-
 const COLORS = ['#22c55e', '#3b82f6', '#ef4444', '#f59e0b'];
 
 function TechnicienSelect({ value, onChange }) {
@@ -35,9 +31,9 @@ function TechnicienSelect({ value, onChange }) {
 
 function NewMachineForm({ onAddMachine, onCancel }) {
   const [formData, setFormData] = useState({
-  name: '', type: '', location: '', installationDate: '', 
-  status: 'opérationnel', notes: '', technicienId: ''
-});
+    name: '', type: '', location: '', installationDate: '', 
+    status: 'opérationnel', notes: '', technicienId: ''
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,7 +46,6 @@ function NewMachineForm({ onAddMachine, onCancel }) {
     const nextDate = new Date();
     nextDate.setDate(today.getDate() + 30);
     const newMachine = {
-      id: Date.now(),
       ...formData,
       lastMaintenance: today.toISOString().split('T')[0],
       nextMaintenance: nextDate.toISOString().split('T')[0],
@@ -126,7 +121,7 @@ function InterventionForm({ machine, onSave, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave({ ...formData, id: Date.now(), machineId: machine.id });
+    onSave({ ...formData, machineId: machine.id });
   };
 
   return (
@@ -186,7 +181,6 @@ function InterventionForm({ machine, onSave, onCancel }) {
 function CalendrierPage({ machines, interventions }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // Construit la liste de tous les événements (maintenances planifiées + interventions passées)
   const allEvents = [
     ...machines.map(m => ({
       date: m.nextMaintenance,
@@ -195,21 +189,19 @@ function CalendrierPage({ machines, interventions }) {
       type: 'planifiée'
     })),
     ...interventions.map(i => {
-      const machine = machines.find(m => m.id === i.machineId);
+      const machine = machines.find(m => m.id === i.machineId || m.id === i.machineid);
       return {
         date: i.date,
-        title: i.type.charAt(0).toUpperCase() + i.type.slice(1),
+        title: i.type ? i.type.charAt(0).toUpperCase() + i.type.slice(1) : 'Intervention',
         machine: machine ? machine.name : '—',
         type: 'passée'
       };
     })
   ];
 
-  // Événements du jour sélectionné
   const selectedDateStr = selectedDate.toISOString().split('T')[0];
   const eventsOnSelectedDate = allEvents.filter(e => e.date === selectedDateStr);
 
-  // Prochaines maintenances triées par date
   const today = new Date().toISOString().split('T')[0];
   const upcomingMaintenances = machines
     .filter(m => m.nextMaintenance >= today)
@@ -217,7 +209,6 @@ function CalendrierPage({ machines, interventions }) {
 
   const formatDate = (dateString) => new Date(dateString).toLocaleDateString('fr-FR');
 
-  // Calcule urgence de la maintenance
   const getUrgencyClass = (dateStr) => {
     const diff = (new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24);
     if (diff <= 7) return 'event-item urgent';
@@ -239,7 +230,6 @@ function CalendrierPage({ machines, interventions }) {
     return `Dans ${diff} jours`;
   };
 
-  // Ajoute un point sous les dates avec des événements
   const tileContent = ({ date }) => {
     const dateStr = date.toISOString().split('T')[0];
     const hasEvent = allEvents.some(e => e.date === dateStr);
@@ -251,7 +241,6 @@ function CalendrierPage({ machines, interventions }) {
       <h2 style={{fontSize: '22px', fontWeight: 'bold', marginBottom: '24px'}}>Calendrier des maintenances</h2>
 
       <div className="calendar-container">
-        {/* Calendrier */}
         <div>
           <div className="card" style={{marginBottom: '16px'}}>
             <Calendar
@@ -262,7 +251,6 @@ function CalendrierPage({ machines, interventions }) {
             />
           </div>
 
-          {/* Événements du jour sélectionné */}
           <div className="card">
             <h2 style={{marginBottom: '12px'}}>
               📅 {selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -283,7 +271,6 @@ function CalendrierPage({ machines, interventions }) {
           </div>
         </div>
 
-        {/* Liste des prochaines maintenances */}
         <div>
           <div className="card">
             <h2 style={{marginBottom: '16px'}}>⏰ Prochaines maintenances</h2>
@@ -317,9 +304,9 @@ function CalendrierPage({ machines, interventions }) {
 function RapportsPage({ machines, interventions }) {
   const interventionsParMachine = machines.map(machine => ({
     name: machine.name,
-    interventions: interventions.filter(i => i.machineId === machine.id).length,
-    incidents: interventions.filter(i => i.machineId === machine.id && i.type === 'incident').length,
-    heures: interventions.filter(i => i.machineId === machine.id).reduce((acc, i) => acc + (parseFloat(i.duree) || 0), 0)
+    interventions: interventions.filter(i => (i.machineId || i.machineid) === machine.id).length,
+    incidents: interventions.filter(i => (i.machineId || i.machineid) === machine.id && i.type === 'incident').length,
+    heures: interventions.filter(i => (i.machineId || i.machineid) === machine.id).reduce((acc, i) => acc + (parseFloat(i.duree) || 0), 0)
   }));
 
   const statutData = [
@@ -466,19 +453,19 @@ function MachinePage({ machine, interventions, onBack, onUpdateMachine, onAddInt
       ...machine,
       lastMaintenance: intervention.date,
       ...(intervention.prochaineMaintenance && { nextMaintenance: intervention.prochaineMaintenance }),
-      ...(intervention.type === 'incident' && { incidents: machine.incidents + 1 })
+      ...(intervention.type === 'incident' && { incidents: (machine.incidents || 0) + 1 })
     };
     onUpdateMachine(updatedMachine);
     onAddIntervention(intervention);
     setShowInterventionForm(false);
   };
 
-  const machineInterventions = interventions.filter(i => i.machineId === machine.id);
+  const machineInterventions = interventions.filter(i => (i.machineId || i.machineid) === machine.id);
 
   return (
     <div>
       <div className="header">
-        <h1>MaintenancePro</h1>
+        <h1>Maintenance CCGQ</h1>
       </div>
 
       <div className="main">
@@ -551,7 +538,7 @@ function MachinePage({ machine, interventions, onBack, onUpdateMachine, onAddInt
                   <span>Technicien</span>
                   <span>{machine.technicienName || '—'}</span>
                 </div>
-                <div className="stat-row"><span>Incidents</span><span>{machine.incidents}</span></div>
+                <div className="stat-row"><span>Incidents</span><span>{machine.incidents || 0}</span></div>
               </>
             )}
           </div>
@@ -571,8 +558,8 @@ function MachinePage({ machine, interventions, onBack, onUpdateMachine, onAddInt
               </>
             ) : (
               <>
-                <div className="stat-row"><span>Dernière maintenance</span><span>{formatDate(machine.lastMaintenance)}</span></div>
-                <div className="stat-row"><span>Prochaine maintenance</span><span>{formatDate(machine.nextMaintenance)}</span></div>
+                <div className="stat-row"><span>Dernière maintenance</span><span>{machine.lastMaintenance ? formatDate(machine.lastMaintenance) : '—'}</span></div>
+                <div className="stat-row"><span>Prochaine maintenance</span><span>{machine.nextMaintenance ? formatDate(machine.nextMaintenance) : '—'}</span></div>
                 <div className="stat-row"><span>Nombre d'interventions</span><span>{machineInterventions.length}</span></div>
               </>
             )}
@@ -582,7 +569,7 @@ function MachinePage({ machine, interventions, onBack, onUpdateMachine, onAddInt
             <h2>Notes</h2>
             {editMode ? (
               <div className="form-group">
-                <textarea name="notes" value={formData.notes} onChange={handleChange} rows="5" style={{width: '100%'}} />
+                <textarea name="notes" value={formData.notes || ''} onChange={handleChange} rows="5" style={{width: '100%'}} />
               </div>
             ) : (
               <p style={{fontSize: '14px', color: machine.notes ? '#374151' : '#9ca3af'}}>
@@ -649,42 +636,37 @@ export default function MaintenanceDashboard() {
   const [showForm, setShowForm] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState(null);
 
-  // Vérifie si l'utilisateur est déjà connecté au chargement de l'app
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // On a un token, on récupère les données
       loadData();
-      // On considère l'utilisateur connecté (token présent)
-      // On pourrait aussi vérifier sa validité via /api/auth/me
       const savedUser = localStorage.getItem('user');
       if (savedUser) setUser(JSON.parse(savedUser));
     }
     setLoading(false);
   }, []);
 
- const loadData = async () => {
-  try {
-    const [machines, ints] = await Promise.all([
-      api.getMachines(),
-      api.getInterventions()
-    ]);
+  const loadData = async () => {
+    try {
+      const [machines, ints] = await Promise.all([
+        api.getMachines(),
+        api.getInterventions()
+      ]);
 
-    const fixedMachines = machines.map(m => ({
-      ...m,
-      lastMaintenance: m.lastmaintenance,
-      nextMaintenance: m.nextmaintenance,
-      technicienId: m.technicienid
-    }));
+      const fixedMachines = machines.map(m => ({
+        ...m,
+        lastMaintenance: m.lastmaintenance || m.lastMaintenance,
+        nextMaintenance: m.nextmaintenance || m.nextMaintenance,
+        technicienId: m.technicienid || m.technicienId
+      }));
 
-    setMachinesData(fixedMachines);
-    setInterventions(ints);
-
-  } catch (err) {
-    console.error('Erreur de chargement', err);
-    handleLogout();
-  }
-};
+      setMachinesData(fixedMachines);
+      setInterventions(ints);
+    } catch (err) {
+      console.error('Erreur de chargement', err);
+      handleLogout();
+    }
+  };
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -706,16 +688,7 @@ export default function MaintenanceDashboard() {
     failure: machinesData.filter(m => m.status === "défaillant").length
   };
 
-  const formatDate = (dateString) => new Date(dateString).toLocaleDateString('fr-FR');
-
-  const getPriorityBadge = (priority) => {
-    switch(priority) {
-      case 'élevée': return 'badge badge-red';
-      case 'normale': return 'badge badge-blue';
-      case 'faible': return 'badge badge-green';
-      default: return 'badge';
-    }
-  };
+  const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString('fr-FR') : '—';
 
   const getStatusBadge = (status) => {
     switch(status) {
@@ -760,19 +733,17 @@ export default function MaintenanceDashboard() {
       try {
         await api.deleteMachine(machineId);
         setMachinesData(prev => prev.filter(m => m.id !== machineId));
-        setInterventions(prev => prev.filter(i => i.machineId !== machineId));
+        setInterventions(prev => prev.filter(i => (i.machineId || i.machineid) !== machineId));
       } catch (err) {
         alert('Erreur lors de la suppression : ' + err.message);
       }
     }
   };
 
-  // Affichage pendant la vérification initiale
   if (loading) {
     return <div style={{ padding: '40px', textAlign: 'center' }}>Chargement...</div>;
   }
 
-  // Pas connecté -> page de connexion
   if (!user) {
     return <LoginPage onLogin={handleLogin} />;
   }
@@ -819,118 +790,115 @@ export default function MaintenanceDashboard() {
       </div>
 
       <div className="main">
-        {activeTab === 'reports' && (
-          <RapportsPage machines={machinesData} interventions={interventions} />
-        )}
-        {activeTab === 'users' && (
-          <UsersPage />
-        )}
-        {activeTab === 'schedule' && (
-          <CalendrierPage machines={machinesData} interventions={interventions} />
-        )}
-        {(activeTab === 'dashboard' || activeTab === 'machines') && (
-          <>
-            <div className="cards-grid">
+        {/* ONGLET 1: TABLEAU DE BORD */}
+        {activeTab === 'dashboard' && (
+          <div>
+            <div className="cards-grid" style={{ marginBottom: '24px' }}>
               <div className="card">
-                <h2>État du parc machines</h2>
-                <div className="status-item">
-                  <div className="status-label">
-                    <div className="status-dot dot-green"></div>
-                    <span>Opérationnelles</span>
-                  </div>
-                  <span className="badge badge-green">{statusCounts.operational}</span>
+                <h2>Opérationnelles</h2>
+                <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#22c55e', margin: '12px 0' }}>
+                  {statusCounts.operational}
                 </div>
-                <div className="status-item">
-                  <div className="status-label">
-                    <div className="status-dot dot-blue"></div>
-                    <span>En maintenance</span>
-                  </div>
-                  <span className="badge badge-blue">{statusCounts.maintenance}</span>
-                </div>
-                <div className="status-item">
-                  <div className="status-label">
-                    <div className="status-dot dot-red"></div>
-                    <span>Défaillantes</span>
-                  </div>
-                  <span className="badge badge-red">{statusCounts.failure}</span>
-                </div>
+                <p style={{ color: '#6b7280', fontSize: '14px' }}>sur {machinesData.length} machines</p>
               </div>
-
               <div className="card">
-                <h2>Statistiques</h2>
-                <div className="stat-row"><span>Total interventions</span><span>{interventions.length}</span></div>
-                <div className="stat-row"><span>Incidents</span><span>{interventions.filter(i => i.type === 'incident').length}</span></div>
-                <div className="stat-row">
-                  <span>Heures d'arrêt total</span>
-                  <span>{interventions.reduce((acc, i) => acc + (parseFloat(i.duree) || 0), 0)}h</span>
+                <h2>En maintenance</h2>
+                <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#3b82f6', margin: '12px 0' }}>
+                  {statusCounts.maintenance}
                 </div>
-                <div className="stat-row"><span>Total machines</span><span>{machinesData.length}</span></div>
+                <p style={{ color: '#6b7280', fontSize: '14px' }}>interventions en cours</p>
               </div>
-
               <div className="card">
-                <h2>Tâches à venir</h2>
-                {machinesData
-                  .filter(m => m.nextMaintenance)
-                  .sort((a, b) => new Date(a.nextMaintenance) - new Date(b.nextMaintenance))
-                  .slice(0, 5)
-                  .map(machine => {
-                     const diff = Math.ceil((new Date(machine.nextMaintenance) - new Date()) / (1000 * 60 * 60 * 24));
-                     return (
-                      <div key={machine.id} className="task-item">
-                        <div>
-                         <div className="task-name">{machine.name}</div>
-                         <div className="task-type">Maintenance planifiée</div>
-                        </div>
-                      <div>
-                         <span className={diff <= 3 ? 'badge badge-red' : diff <= 7 ? 'badge badge-yellow' : 'badge badge-green'}>
-                          {diff <= 0 ? 'En retard !' : diff === 1 ? 'Demain' : `Dans ${diff} jours`}
-                         </span>
-                         <div className="task-date">📅 {formatDate(machine.nextMaintenance)}</div>
-                      </div>
-               </div>
-              );
-            })
-          }
-          {machinesData.filter(m => m.nextMaintenance).length === 0 && (
-            <p style={{color: '#9ca3af', fontSize: '14px'}}>Aucune maintenance planifiée.</p>
-          )}
-        </div>
-               
-                <button className="btn-link">Voir toutes les tâches</button>
+                <h2>Défaillantes</h2>
+                <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#ef4444', margin: '12px 0' }}>
+                  {statusCounts.failure}
+                </div>
+                <p style={{ color: '#6b7280', fontSize: '14px' }}>action requise</p>
               </div>
             </div>
 
             <div className="table-container">
-              <div className="table-header">Machines ({machinesData.length})</div>
+              <div className="table-header">Aperçu rapide des machines</div>
               <table>
                 <thead>
                   <tr>
                     <th>Nom</th>
+                    <th>Emplacement</th>
                     <th>État</th>
-                    <th>Dernière maintenance</th>
                     <th>Prochaine maintenance</th>
-                    <th>Incidents</th>
-                    <th>Actions</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {machinesData.map(machine => (
                     <tr key={machine.id}>
                       <td><strong>{machine.name}</strong></td>
+                      <td>{machine.location || '—'}</td>
                       <td><span className={getStatusBadge(machine.status)}>{machine.status}</span></td>
-                      <td>{formatDate(machine.lastMaintenance)}</td>
                       <td>{formatDate(machine.nextMaintenance)}</td>
-                      <td>{machine.incidents}</td>
                       <td>
-                        <button className="btn-table-blue" onClick={() => setSelectedMachine(machine)}>Détails</button>
-                        <button className="btn-table-green" onClick={() => setSelectedMachine(machine)}>Maintenance</button>
+                        <button className="btn-secondary" onClick={() => setSelectedMachine(machine)}>
+                          Détails
+                        </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </>
+          </div>
+        )}
+
+        {/* ONGLET 2: MACHINES */}
+        {activeTab === 'machines' && (
+          <div className="table-container">
+            <div className="table-header">Liste complète des machines ({machinesData.length})</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Type</th>
+                  <th>Emplacement</th>
+                  <th>État</th>
+                  <th>Dernière maintenance</th>
+                  <th>Prochaine maintenance</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {machinesData.map(machine => (
+                  <tr key={machine.id}>
+                    <td><strong>{machine.name}</strong></td>
+                    <td>{machine.type || '—'}</td>
+                    <td>{machine.location || '—'}</td>
+                    <td><span className={getStatusBadge(machine.status)}>{machine.status}</span></td>
+                    <td>{formatDate(machine.lastMaintenance)}</td>
+                    <td>{formatDate(machine.nextMaintenance)}</td>
+                    <td>
+                      <button className="btn-secondary" onClick={() => setSelectedMachine(machine)}>
+                        ⚙️ Gérer
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ONGLET 3: CALENDRIER */}
+        {activeTab === 'schedule' && (
+          <CalendrierPage machines={machinesData} interventions={interventions} />
+        )}
+
+        {/* ONGLET 4: RAPPORTS */}
+        {activeTab === 'reports' && (
+          <RapportsPage machines={machinesData} interventions={interventions} />
+        )}
+
+        {/* ONGLET 5: UTILISATEURS */}
+        {activeTab === 'users' && (
+          <UsersPage />
         )}
       </div>
 

@@ -407,6 +407,16 @@ function MachinePage({ machine, interventions, onBack, onUpdateMachine, onAddInt
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({ ...machine });
   const [showInterventionForm, setShowInterventionForm] = useState(false);
+  // 1. Ajouter un state pour stocker la liste des utilisateurs/techniciens
+  const [users, setUsers] = useState([]);
+
+  // 2. Charger les utilisateurs au montage du composant
+  useEffect(() => {
+    api.getUsers().then(setUsers).catch(console.error);
+  }, []);
+
+  // 3. Trouver le technicien assigné à cette machine
+  const currentTechnicien = users.find(u => String(u.id) === String(machine.technicienId));
 
   const formatDate = (dateString) => new Date(dateString).toLocaleDateString('fr-FR');
 
@@ -536,7 +546,7 @@ function MachinePage({ machine, interventions, onBack, onUpdateMachine, onAddInt
                 </div>          
                 <div className="stat-row">
                   <span>Technicien</span>
-                  <span>{machine.technicienName || '—'}</span>
+                  <span>{currentTechnicien ? `${currentTechnicien.name} (${currentTechnicien.role})` : '—'}</span>
                 </div>
                 <div className="stat-row"><span>Incidents</span><span>{machine.incidents || 0}</span></div>
               </>

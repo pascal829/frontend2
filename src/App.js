@@ -454,8 +454,16 @@ function MachinePage({ machine, interventions, onBack, onUpdateMachine, onAddInt
   };
 
   const handleSave = () => {
-    onUpdateMachine(formData);
-    setEditMode(false);
+  // Trouver le technicien sélectionné pour conserver son nom dans le state
+  const selectedUser = users.find(u => String(u.id) === String(formData.technicienId));
+  
+  const updatedData = {
+    ...formData,
+    technicienName: selectedUser ? selectedUser.name : ''
+  };
+
+  onUpdateMachine(updatedData);
+  setEditMode(false);
   };
 
   const handleSaveIntervention = (intervention) => {

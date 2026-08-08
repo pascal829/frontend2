@@ -302,11 +302,17 @@ function CalendrierPage({ machines, interventions }) {
 }
 
 function RapportsPage({ machines, interventions }) {
+  // Fonction utilitaire pour comparer les IDs de manière sécurisée
+  const isMatch = (intervention, machineId) => {
+    const intMachineId = intervention.machineId ?? intervention.machineid;
+    return String(intMachineId) === String(machineId);
+  };
+
   const interventionsParMachine = machines.map(machine => ({
     name: machine.name,
-    interventions: interventions.filter(i => (i.machineId || i.machineid) === machine.id).length,
-    incidents: interventions.filter(i => (i.machineId || i.machineid) === machine.id && i.type === 'incident').length,
-    heures: interventions.filter(i => (i.machineId || i.machineid) === machine.id).reduce((acc, i) => acc + (parseFloat(i.duree) || 0), 0)
+    interventions: interventions.filter(i => isMatch(i, machine.id)).length,
+    incidents: interventions.filter(i => isMatch(i, machine.id) && i.type === 'incident').length,
+    heures: interventions.filter(i => isMatch(i, machine.id)).reduce((acc, i) => acc + (parseFloat(i.duree) || 0), 0)
   }));
 
   const statutData = [
@@ -920,7 +926,15 @@ export default function MaintenanceDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {machinesData.map(machine => (
+                {[...machinesData]
+                  .sort((a, b) =>
+                   (a.location || '').localeCompare(
+                     b.location || '',
+                     'fr',
+                     { sensitivity: 'base' }
+                   )
+                )
+    .map(machine => (
                   <tr key={machine.id}>
                     <td><strong>{machine.name}</strong></td>
                     <td>{machine.type || '—'}</td>

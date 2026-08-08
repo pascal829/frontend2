@@ -764,19 +764,7 @@ export default function MaintenanceDashboard() {
     }
   };
 
-  const groupMachinesByLocation = (machines) => {
-  return machines.reduce((groups, machine) => {
-    const location = machine.location || 'Sans emplacement';
-
-    if (!groups[location]) {
-      groups[location] = [];
-    }
-
-    groups[location].push(machine);
-
-    return groups;
-  }, {});
-  };
+  
 
   if (loading) {
     return <div style={{ padding: '40px', textAlign: 'center' }}>Chargement...</div>;

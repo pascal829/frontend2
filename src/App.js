@@ -764,6 +764,20 @@ export default function MaintenanceDashboard() {
     }
   };
 
+  const groupMachinesByLocation = (machines) => {
+  return machines.reduce((groups, machine) => {
+    const location = machine.location || 'Sans emplacement';
+
+    if (!groups[location]) {
+      groups[location] = [];
+    }
+
+    groups[location].push(machine);
+
+    return groups;
+  }, {});
+  };
+
   if (loading) {
     return <div style={{ padding: '40px', textAlign: 'center' }}>Chargement...</div>;
   }
@@ -910,49 +924,123 @@ export default function MaintenanceDashboard() {
 })()}
 
         {/* ONGLET 2: MACHINES */}
-        {activeTab === 'machines' && (
-          <div className="table-container">
-            <div className="table-header">Liste complète des machines ({machinesData.length})</div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Nom</th>
-                  <th>Type</th>
-                  <th>Emplacement</th>
-                  <th>État</th>
-                  <th>Dernière maintenance</th>
-                  <th>Prochaine maintenance</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...machinesData]
-                  .sort((a, b) =>
-                   (a.location || '').localeCompare(
-                     b.location || '',
-                     'fr',
-                     { sensitivity: 'base' }
-                   )
+{activeTab === 'machines' && (
+  <div className="table-container">
+
+    <div className="table-header">
+      Liste complète des machines ({machinesData.length})
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Type</th>
+          <th>État</th>
+          <th>Dernière maintenance</th>
+          <th>Prochaine maintenance</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {Object.entries(groupMachinesByLocation(machinesData))
+          .sort(([locationA], [locationB]) =>
+            locationA.localeCompare(
+              locationB,
+              'fr',
+              { sensitivity: 'base' }
+            )
+          )
+          .map(([location, machines]) => (
+            <React.Fragment key={location}>
+
+              {/* =============================== */}
+              {/* EN-TÊTE DE L'EMPLACEMENT */}
+              {/* =============================== */}
+
+              <tr>
+                <td
+                  colSpan="6"
+                  style={{
+                    backgroundColor: '#f3f4f6',
+                    fontWeight: 'bold',
+                    fontSize: '15px',
+                    padding: '10px 12px',
+                    borderTop: '2px solid #d1d5db'
+                  }}
+                >
+                  📍 {location}
+
+                  <span
+                    style={{
+                      marginLeft: '10px',
+                      fontSize: '12px',
+                      fontWeight: 'normal',
+                      color: '#6b7280'
+                    }}
+                  >
+                    ({machines.length} machine
+                    {machines.length > 1 ? 's' : ''})
+                  </span>
+                </td>
+              </tr>
+
+              {/* =============================== */}
+              {/* MACHINES DE L'EMPLACEMENT */}
+              {/* =============================== */}
+
+              {machines
+                .sort((a, b) =>
+                  (a.name || '').localeCompare(
+                    b.name || '',
+                    'fr',
+                    { sensitivity: 'base' }
+                  )
                 )
-    .map(machine => (
+                .map(machine => (
                   <tr key={machine.id}>
-                    <td><strong>{machine.name}</strong></td>
-                    <td>{machine.type || '—'}</td>
-                    <td>{machine.location || '—'}</td>
-                    <td><span className={getStatusBadge(machine.status)}>{machine.status}</span></td>
-                    <td>{formatDate(machine.lastMaintenance)}</td>
-                    <td>{formatDate(machine.nextMaintenance)}</td>
+
                     <td>
-                      <button className="btn-secondary" onClick={() => setSelectedMachine(machine)}>
+                      <strong>{machine.name}</strong>
+                    </td>
+
+                    <td>
+                      {machine.type || '—'}
+                    </td>
+
+                    <td>
+                      <span className={getStatusBadge(machine.status)}>
+                        {machine.status}
+                      </span>
+                    </td>
+
+                    <td>
+                      {formatDate(machine.lastMaintenance)}
+                    </td>
+
+                    <td>
+                      {formatDate(machine.nextMaintenance)}
+                    </td>
+
+                    <td>
+                      <button
+                        className="btn-secondary"
+                        onClick={() => setSelectedMachine(machine)}
+                      >
                         ⚙️ Gérer
                       </button>
                     </td>
+
                   </tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+            </React.Fragment>
+          ))}
+      </tbody>
+    </table>
+
+  </div>
+)}
 
         {/* ONGLET 3: CALENDRIER */}
         {activeTab === 'schedule' && (

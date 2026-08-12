@@ -90,7 +90,8 @@ export default function UsersPage() {
                 <td><strong>{u.name}</strong></td>
                 <td>{u.email}</td>
                 <td>
-                  <span className={u.role === 'admin' ? 'badge badge-blue' : 'badge badge-green'}>
+                  
+                  <span className={u.role === 'admin' ? 'badge badge-blue' : u.role === 'bureau' ? 'badge badge-yellow' : 'badge badge-green'}>  
                     {u.role}
                   </span>
                 </td>

@@ -140,6 +140,7 @@ export default function UsersPage() {
                   <select name="role" value={formData.role} onChange={handleChange}>
                     <option value="technicien">Technicien</option>
                     <option value="admin">Administrateur</option>
+                    <option value="bureau">Bureau</option>
                   </select>
                 </div>
               </div>

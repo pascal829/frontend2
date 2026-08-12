@@ -31,14 +31,8 @@ function TechnicienSelect({ value, onChange }) {
 
 function NewMachineForm({ onAddMachine, onCancel }) {
   const [formData, setFormData] = useState({
-    name: '',
-    type: '',
-    location: '',
-    installationDate: '',
-    status: 'opérationnel',
-    notes: '',
-    technicienId: '',
-    maintenanceInterval: '30'
+    name: '', type: '', location: '', installationDate: '', 
+    status: 'opérationnel', notes: '', technicienId: ''
   });
 
   const handleChange = (e) => {
@@ -48,27 +42,15 @@ function NewMachineForm({ onAddMachine, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    const interval = parseInt(formData.maintenanceInterval, 10);
-
-    if (!interval || interval <= 0) {
-      alert('Veuillez saisir une périodicité de maintenance valide.');
-      return;
-    }
-
     const today = new Date();
-
-    const nextDate = new Date(today);
-    nextDate.setDate(nextDate.getDate() + interval);
-
+    const nextDate = new Date();
+    nextDate.setDate(today.getDate() + 30);
     const newMachine = {
       ...formData,
-      maintenanceInterval: interval,
       lastMaintenance: today.toISOString().split('T')[0],
       nextMaintenance: nextDate.toISOString().split('T')[0],
       incidents: 0
     };
-
     onAddMachine(newMachine);
   };
 
@@ -76,131 +58,45 @@ function NewMachineForm({ onAddMachine, onCancel }) {
     <div className="modal-overlay">
       <div className="modal">
         <h2>Ajouter une nouvelle machine</h2>
-
         <form onSubmit={handleSubmit}>
           <div className="form-grid">
-
             <div className="form-group">
               <label>Nom de la machine *</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
+              <input type="text" name="name" value={formData.name} onChange={handleChange} required />
             </div>
-
             <div className="form-group">
               <label>Type de machine</label>
-              <input
-                type="text"
-                name="type"
-                value={formData.type}
-                onChange={handleChange}
-              />
+              <input type="text" name="type" value={formData.type} onChange={handleChange} />
             </div>
-
             <div className="form-group">
               <label>Emplacement</label>
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-              />
+              <input type="text" name="location" value={formData.location} onChange={handleChange} />
             </div>
-
             <div className="form-group">
               <label>Date d'installation</label>
-              <input
-                type="date"
-                name="installationDate"
-                value={formData.installationDate}
-                onChange={handleChange}
-              />
+              <input type="date" name="installationDate" value={formData.installationDate} onChange={handleChange} />
             </div>
-
-            {/* NOUVEAU : périodicité */}
-            <div className="form-group">
-              <label>Périodicité de maintenance *</label>
-
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <input
-                  type="number"
-                  name="maintenanceInterval"
-                  value={formData.maintenanceInterval}
-                  onChange={handleChange}
-                  min="1"
-                  required
-                  style={{ width: '120px' }}
-                />
-
-                <span>jours</span>
-              </div>
-
-              <small style={{
-                color: '#6b7280',
-                display: 'block',
-                marginTop: '5px'
-              }}>
-                Exemple : 30, 60, 90, 180 ou 365 jours
-              </small>
-            </div>
-
             <div className="form-group">
               <label>État initial</label>
-
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-              >
+              <select name="status" value={formData.status} onChange={handleChange}>
                 <option value="opérationnel">Opérationnel</option>
                 <option value="maintenance">En maintenance</option>
                 <option value="défaillant">Défaillant</option>
               </select>
             </div>
-
             <TechnicienSelect
               value={formData.technicienId}
               onChange={handleChange}
             />
-
             <div className="form-group form-group-full">
               <label>Notes additionnelles</label>
-
-              <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
-                rows="3"
-              />
+              <textarea name="notes" value={formData.notes} onChange={handleChange} rows="3" />
             </div>
-
           </div>
-
           <div className="modal-buttons">
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={onCancel}
-            >
-              Annuler
-            </button>
-
-            <button
-              type="submit"
-              className="btn-primary"
-            >
-              Ajouter la machine
-            </button>
+            <button type="button" className="btn-secondary" onClick={onCancel}>Annuler</button>
+            <button type="submit" className="btn-primary">Ajouter la machine</button>
           </div>
-
         </form>
       </div>
     </div>
@@ -264,41 +160,9 @@ function InterventionForm({ machine, onSave, onCancel }) {
               </select>
             </div>
             <div className="form-group">
-  <label>Prochaine maintenance</label>
-
-  <div style={{
-    padding: '10px',
-    backgroundColor: '#f3f4f6',
-    borderRadius: '6px'
-  }}>
-    Calculée automatiquement :
-
-    <strong style={{ marginLeft: '8px' }}>
-      {(() => {
-        const interval =
-          Number(machine.maintenanceInterval) || 30;
-
-        const nextDate = new Date(formData.date);
-
-        nextDate.setDate(
-          nextDate.getDate() + interval
-        );
-
-        return nextDate.toLocaleDateString('fr-FR');
-      })()}
-    </strong>
-  </div>
-
-  <small style={{
-    color: '#6b7280',
-    display: 'block',
-    marginTop: '5px'
-  }}>
-    Selon la périodicité de cette machine :
-    {' '}
-    {machine.maintenanceInterval || 30} jours.
-  </small>
-</div>
+              <label>Prochaine maintenance</label>
+              <input type="date" name="prochaineMaintenance" value={formData.prochaineMaintenance} onChange={handleChange} />
+            </div>
             <div className="form-group form-group-full">
               <label>Description *</label>
               <textarea name="description" value={formData.description} onChange={handleChange} rows="3" required />
@@ -609,37 +473,16 @@ function MachinePage({ machine, interventions, onBack, onUpdateMachine, onAddInt
   };
 
   const handleSaveIntervention = (intervention) => {
-
-  const interval =
-    Number(machine.maintenanceInterval) || 30;
-
-  const nextDate = new Date(intervention.date);
-
-  nextDate.setDate(
-    nextDate.getDate() + interval
-  );
-
-  const nextMaintenance =
-    nextDate.toISOString().split('T')[0];
-
-  const updatedMachine = {
-    ...machine,
-
-    lastMaintenance: intervention.date,
-
-    nextMaintenance: nextMaintenance,
-
-    ...(intervention.type === 'incident' && {
-      incidents: (machine.incidents || 0) + 1
-    })
+    const updatedMachine = {
+      ...machine,
+      lastMaintenance: intervention.date,
+      ...(intervention.prochaineMaintenance && { nextMaintenance: intervention.prochaineMaintenance }),
+      ...(intervention.type === 'incident' && { incidents: (machine.incidents || 0) + 1 })
+    };
+    onUpdateMachine(updatedMachine);
+    onAddIntervention(intervention);
+    setShowInterventionForm(false);
   };
-
-  onUpdateMachine(updatedMachine);
-
-  onAddIntervention(intervention);
-
-  setShowInterventionForm(false);
-};
 
   const machineInterventions = interventions.filter(i => (i.machineId || i.machineid) === machine.id);
 
@@ -732,27 +575,6 @@ function MachinePage({ machine, interventions, onBack, onUpdateMachine, onAddInt
                   <label>Dernière maintenance</label>
                   <input type="date" name="lastMaintenance" value={formData.lastMaintenance} onChange={handleChange} />
                 </div>
-                <div className="form-group" style={{marginBottom: '12px'}}>
-  <label>Périodicité de maintenance</label>
-
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px'
-  }}>
-    <input
-      type="number"
-      name="maintenanceInterval"
-      value={formData.maintenanceInterval || 30}
-      onChange={handleChange}
-      min="1"
-      required
-    />
-
-    <span>jours</span>
-  </div>
-</div>
-
                 <div className="form-group" style={{marginBottom: '12px'}}>
                   <label>Prochaine maintenance</label>
                   <input type="date" name="nextMaintenance" value={formData.nextMaintenance} onChange={handleChange} />
@@ -856,22 +678,11 @@ export default function MaintenanceDashboard() {
       ]);
 
       const fixedMachines = machines.map(m => ({
-  ...m,
-
-  lastMaintenance:
-    m.lastmaintenance || m.lastMaintenance,
-
-  nextMaintenance:
-    m.nextmaintenance || m.nextMaintenance,
-
-  technicienId:
-    m.technicienid || m.technicienId,
-
-  maintenanceInterval:
-    m.maintenanceinterval ||
-    m.maintenanceInterval ||
-    30
-}));
+        ...m,
+        lastMaintenance: m.lastmaintenance || m.lastMaintenance,
+        nextMaintenance: m.nextmaintenance || m.nextMaintenance,
+        technicienId: m.technicienid || m.technicienId
+      }));
 
       setMachinesData(fixedMachines);
       setInterventions(ints);

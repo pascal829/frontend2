@@ -837,6 +837,7 @@ export default function MaintenanceDashboard() {
   const [interventions, setInterventions] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState(null);
+  const [collapsedLocations, setCollapsedLocations] = useState({});
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -1127,65 +1128,125 @@ export default function MaintenanceDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {Object.entries(groupMachinesByLocation(machinesData))
-                  .sort(([locationA], [locationB]) =>
-                    locationA.localeCompare(locationB, 'fr', { sensitivity: 'base' })
-                  )
-                  .map(([location, machines]) => (
-                    <React.Fragment key={location}>
-                      <tr>
-                        <td
-                          colSpan="6"
-                          style={{
-                            backgroundColor: '#f3f4f6',
-                            fontWeight: 'bold',
-                            fontSize: '15px',
-                            padding: '10px 12px',
-                            borderTop: '2px solid #d1d5db'
-                          }}
-                        >
-                          📍 {location}
-                          <span
-                            style={{
-                              marginLeft: '10px',
-                              fontSize: '12px',
-                              fontWeight: 'normal',
-                              color: '#6b7280'
-                            }}
-                          >
-                            ({machines.length} machine{machines.length > 1 ? 's' : ''})
-                          </span>
-                        </td>
-                      </tr>
+  {Object.entries(groupMachinesByLocation(machinesData))
+    .sort(([locationA], [locationB]) =>
+      locationA.localeCompare(locationB, 'fr', { sensitivity: 'base' })
+    )
+    .map(([location, machines]) => {
+      const isCollapsed = collapsedLocations[location];
 
-                      {machines
-                        .sort((a, b) =>
-                          (a.name || '').localeCompare(b.name || '', 'fr', { sensitivity: 'base' })
-                        )
-                        .map(machine => (
-                          <tr key={machine.id}>
-                            <td><strong>{machine.name}</strong></td>
-                            <td>{machine.type || '—'}</td>
-                            <td>
-                              <span className={getStatusBadge(machine.status)}>
-                                {machine.status}
-                              </span>
-                            </td>
-                            <td>{formatDate(machine.lastMaintenance)}</td>
-                            <td>{formatDate(machine.nextMaintenance)}</td>
-                            <td>
-                              <button
-                                className="btn-secondary"
-                                onClick={() => setSelectedMachine(machine)}
-                              >
-                                ⚙️ Gérer
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                    </React.Fragment>
-                  ))}
-              </tbody>
+      return (
+        <React.Fragment key={location}>
+
+          {/* ===== EN-TÊTE DE L'EMPLACEMENT ===== */}
+          <tr
+            onClick={() =>
+              setCollapsedLocations(prev => ({
+                ...prev,
+                [location]: !prev[location]
+              }))
+            }
+            style={{ cursor: 'pointer' }}
+          >
+            <td
+              colSpan="6"
+              style={{
+                backgroundColor: '#f3f4f6',
+                fontWeight: 'bold',
+                fontSize: '15px',
+                padding: '10px 12px',
+                borderTop: '2px solid #d1d5db',
+                userSelect: 'none'
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: '22px',
+                  fontSize: '13px'
+                }}
+              >
+                {isCollapsed ? '▶' : '▼'}
+              </span>
+
+              📍 {location}
+
+              <span
+                style={{
+                  marginLeft: '10px',
+                  fontSize: '12px',
+                  fontWeight: 'normal',
+                  color: '#6b7280'
+                }}
+              >
+                ({machines.length} machine
+                {machines.length > 1 ? 's' : ''})
+              </span>
+
+              <span
+                style={{
+                  float: 'right',
+                  fontSize: '12px',
+                  fontWeight: 'normal',
+                  color: '#6b7280'
+                }}
+              >
+                {isCollapsed ? 'Cliquer pour afficher' : 'Cliquer pour réduire'}
+              </span>
+            </td>
+          </tr>
+
+          {/* ===== MACHINES DE L'EMPLACEMENT ===== */}
+          {!isCollapsed &&
+            machines
+              .sort((a, b) =>
+                (a.name || '').localeCompare(
+                  b.name || '',
+                  'fr',
+                  { sensitivity: 'base' }
+                )
+              )
+              .map(machine => (
+                <tr key={machine.id}>
+                  <td>
+                    <strong>{machine.name}</strong>
+                  </td>
+
+                  <td>
+                    {machine.type || '—'}
+                  </td>
+
+                  <td>
+                    <span className={getStatusBadge(machine.status)}>
+                      {machine.status}
+                    </span>
+                  </td>
+
+                  <td>
+                    {formatDate(machine.lastMaintenance)}
+                  </td>
+
+                  <td>
+                    {formatDate(machine.nextMaintenance)}
+                  </td>
+
+                  <td>
+                    <button
+                      className="btn-secondary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedMachine(machine);
+                      }}
+                    >
+                      ⚙️ Gérer
+                    </button>
+                  </td>
+                </tr>
+              ))}
+        </React.Fragment>
+      );
+    })}
+</tbody>
             </table>
           </div>
         )}

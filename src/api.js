@@ -30,9 +30,19 @@ export const api = {
     request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
 
   // Gestion des utilisateurs (admin uniquement)
-  createUser: (email, password, name, role) =>
-    request('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, name, role }) }),
-  getAdminUsers: () => request('/auth/users'),
+createUser: (email, password, name, role) =>
+  request('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ email, password, name, role })
+  }),
+
+getAdminUsers: () => request('/auth/users'),
+
+resetUserPassword: (id, password) =>
+  request(`/auth/users/${id}/password`, {
+    method: 'PUT',
+    body: JSON.stringify({ password })
+  }),
 
   // Liste simplifiée pour tous (sélecteur technicien)
   getUsers: () => request('/users'),
